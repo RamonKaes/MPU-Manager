@@ -1,0 +1,41 @@
+# Abhängigkeiten
+/vendor/
+
+# Build-Ausgabe
+/dist/
+
+# Composer (nur Lock-File wird versioniert)
+composer.phar
+
+# Sensible Konfiguration
+.env
+.env.*
+!.env.example
+config/db_credentials.php
+config/users.php
+
+# Logs & temporäre Dateien
+*.log
+/tmp/
+/temp/
+*.bak
+*.tmp
+
+# Test-Artefakte
+.phpunit.result.cache
+
+# PDF-Ausgaben
+*.pdf
+
+# OS-Dateien
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+ssh.txt
+/_prompts/

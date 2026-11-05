@@ -1,0 +1,105 @@
+# ── Deployment-Checkliste ──────────────────────────────────────────
+# 1. TLS-Zertifikat für die Domain beim Hoster aktivieren
+# 2. Wenn möglich zusätzlich beim Hoster HTTP auf HTTPS umleiten
+# 3. config/users.php mit echten Passwort-Hashes befüllen (H-1)
+# 4. Umgebungsvariablen DB_USER / DB_PASS / DB_HOST / DB_NAME in
+#    den Einstellungen des Hosters oder per .htaccess SetEnv setzen
+# 5. Browser-Test: http:// muss auf https:// umleiten (301)
+# 6. Browser-Test: Login-Seite erscheint, kein Zugriff ohne Session
+# 7. Browser-Test: Session-Cookie trägt "Secure" (DevTools → Application →
+#    Cookies). Fehlt es, ist SetEnv APP_FORCE_HTTPS unten nicht aktiv.
+# ───────────────────────────────────────────────────────────────────
+
+# HTTPS-Erzwingung (TLS-Zertifikat vorher beim Hoster aktivieren)
+# X-Forwarded-Proto: Terminiert ein Proxy das TLS, steht HTTPS hier auf off, und die Umleitung
+# liefe im Kreis. Ein Client kann damit nur für sich selbst die Umleitung abschalten.
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !^https [NC]
+RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$ [NC]
+RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:[0-9]+)?$
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ── Umgebungsvariablen (Werte vor Go-Live eintragen und auskommentieren) ──
+# SetEnv DB_USER    datenbankbenutzer
+# SetEnv DB_PASS    sicheres-passwort-min-20-zeichen
+# SetEnv DB_HOST    localhost
+# SetEnv DB_NAME    mpu
+#
+# Erklärt die Installation als reine HTTPS-Installation (E-1). Davon hängen das
+# Secure-Flag des Session-Cookies und der HSTS-Header ab. Zusammen mit der
+# HTTPS-Erzwingung oben ist das hier immer zutreffend — scripts/build.sh
+# aktiviert die Zeile deshalb automatisch in dist/. Im Quellbaum bleibt sie
+# auskommentiert, damit die lokale Entwicklung über http://127.0.0.1:8088
+# weiter funktioniert.
+# SetEnv APP_FORCE_HTTPS 1
+# ──────────────────────────────────────────────────────────────────────────
+
+# MPU Praxis-Manager – Zugangssicherung via PHP-Session-Login
+#
+# HTTP-Basic-Auth wurde entfernt. Die Zugangskontrolle erfolgt vollständig
+# durch login.php / auth.php (Session-basiert).
+#
+# Passwort-Hashes liegen in config/users.php und dürfen nie über HTTP
+# ausgeliefert werden.
+
+# Direktzugriff auf das config-Verzeichnis unterbinden (Passwort-Hashes in
+# users.php, Schwellenwerte). Die App lädt diese Dateien per require vom
+# Dateisystem – ein HTTP-Zugriff ist nie legitim.
+# (Ersetzt die frühere, wirkungslose <Files "config/users.php">-Regel: <Files>
+#  matcht nur den Basisnamen, nie einen Pfad mit Slash.)
+RewriteRule ^config/ - [F,L]
+
+# Alles, was nur per require geladen wird oder nicht zur Anwendung gehört. Kein Router
+# heißt: Jede Datei ist eine Adresse, und das Login-Gate liegt erst in db.php.
+RewriteRule ^(logic|handlers|partials|tests|vendor|migrations|\.git)(/|$) - [F,L]
+RewriteRule ^scripts/(?!schema_check\.php$) - [F,L]
+RewriteRule ^(auth|sidebar|triage)\.php$ - [F,L]
+RewriteRule ^composer\.(json|lock)$ - [F,L]
+
+<Files "cleanup.php">
+    Require all denied
+</Files>
+
+# Ausgeliefert wird nur, was die Anwendung selbst braucht. Eine Liste erlaubter Endungen statt
+# einer Sperrliste: Dumps, Fehlerlogs und Kopien tragen beliebige Namen (`*.sql.gz`, `error_log`,
+# `.env.bak`, `akte.php~`). Das leere Muster steht für Verzeichnisaufrufe, sonst greift kein index.php.
+Options -Indexes
+<FilesMatch "">
+    Require all denied
+</FilesMatch>
+<FilesMatch "^$|\.(php|css|js|woff2|svg|png|ico)$">
+    Require all granted
+</FilesMatch>
+
+# ── Auslieferung: Kompression ──────────────────────────────────────────────
+# CSS/JS/SVG sind textbasiert und komprimieren um Faktor 5-8. Fonts (woff2)
+# und PNG sind bereits komprimiert und werden bewusst ausgelassen.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+    AddOutputFilterByType DEFLATE application/javascript application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ── Auslieferung: Browser-Caching ──────────────────────────────────────────
+# Assets sind versionslos benannt, daher nur 30 Tage statt "immutable":
+# nach einem Deploy sollen Clients die neuen Dateien in absehbarer Zeit sehen.
+# HTML/PHP nie cachen - die Seiten sind sitzungs- und datenabhängig.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css                  "access plus 30 days"
+    ExpiresByType application/javascript    "access plus 30 days"
+    ExpiresByType font/woff2                "access plus 30 days"
+    ExpiresByType image/svg+xml             "access plus 30 days"
+    ExpiresByType image/png                 "access plus 30 days"
+    ExpiresDefault                          "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|woff2|svg|png)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>

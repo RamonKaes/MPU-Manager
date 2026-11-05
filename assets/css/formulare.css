@@ -1,0 +1,89 @@
+/* ── Width Utilities ──────────────────────────────────────────────────────── */
+.min-w-9 {
+    min-width: 9rem;
+}
+
+.min-w-8 {
+    min-width: 8rem;
+}
+
+.dynamic-section {
+    display: none;
+    padding: 15px;
+    background-color: var(--tblr-bg-surface-secondary);
+    border-radius: var(--tblr-border-radius);
+    margin-top: 10px;
+    border-left: 3px solid var(--tblr-primary);
+}
+
+/* ── Druckansicht ────────────────────────────────────────────────────────── */
+@media print {
+    /* Navigation und Seitenleiste vollständig ausblenden */
+    .navbar,
+    .navbar-vertical,
+    .sidebar,
+    .page-header,
+    .btn,
+    .dropdown,
+    .alert,
+    [data-bs-toggle],
+    .d-print-none {
+        display: none !important;
+    }
+
+    /* Schrift und Layout */
+    body, .page-body {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 11pt;
+        line-height: 1.4;
+        color: #000;
+        background: #fff;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container-xl, .container-fluid {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+
+    .card {
+        border: 0.5pt solid #ccc;
+        box-shadow: none;
+        break-inside: avoid;
+        margin-bottom: 12pt;
+    }
+
+    .card-header {
+        background: #f5f5f5 !important;
+        border-bottom: 0.5pt solid #ccc;
+        padding: 6pt 10pt;
+    }
+
+    .card-body {
+        padding: 8pt 10pt;
+    }
+
+    /* Kopfzeile mit Klientenname und Datum auf jeder Seite */
+    @page {
+        margin: 18mm 15mm 20mm 15mm;
+        @top-center {
+            content: "MPU Praxis-Manager – Klientenakte";
+            font-family: Georgia, serif;
+            font-size: 9pt;
+            color: #666;
+        }
+        @bottom-right {
+            content: "Seite " counter(page) " von " counter(pages);
+            font-family: Georgia, serif;
+            font-size: 9pt;
+            color: #666;
+        }
+    }
+}
+
+/* ── Whitespace Utilities ────────────────────────────────────────────────────────── */
+.ws-pre-wrap {
+    white-space: pre-wrap;
+}

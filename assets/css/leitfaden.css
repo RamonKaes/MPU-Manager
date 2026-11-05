@@ -1,0 +1,108 @@
+/*
+ * assets/css/leitfaden.css
+ * ─────────────────────────────────────────────────────────────────
+ * Seitenspezifische Stile für klienten_leitfaden.php.
+ * Der Leitfaden wird Klienten ausgedruckt mitgegeben – der Druck
+ * muss ohne Navigation, ohne Farbflächen und papiersparend erfolgen.
+ */
+
+/* ── Bildschirm ─────────────────────────────────────────────────── */
+.leitfaden-schritt {
+    border-left: 3px solid var(--tblr-primary);
+    padding-left: 1rem;
+}
+
+.leitfaden-zeitplan td {
+    height: 2.4rem;
+}
+
+.leitfaden-zeitplan .feld {
+    border-bottom: 1px dotted #adb5bd;
+    display: block;
+    min-height: 1.4rem;
+}
+
+/* ── Druck ──────────────────────────────────────────────────────── */
+@media print {
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 10.5pt;
+    }
+
+    /* Inhaltsverzeichnis, Navigation und Buttons entfallen im Druck */
+    .leitfaden-toc,
+    .page-header,
+    .footer {
+        display: none !important;
+    }
+
+    /* Der Inhalt nutzt im Druck die volle Blattbreite */
+    .leitfaden-inhalt {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+    }
+
+    .page-wrapper,
+    .page-body,
+    .container-xl {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 1rem !important;
+    }
+
+    .card-header {
+        background: #f1f1f1 !important;
+        border-bottom: 1px solid #ccc !important;
+    }
+
+    .alert {
+        border: 1px solid #999 !important;
+        background: #fafafa !important;
+        color: #000 !important;
+    }
+
+    .badge {
+        border: 1px solid #999 !important;
+        color: #000 !important;
+        background: #fff !important;
+    }
+
+    table {
+        break-inside: auto;
+        page-break-inside: auto;
+    }
+
+    tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    a {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+
+    .seitenumbruch {
+        break-before: page;
+        page-break-before: always;
+    }
+
+    /* Ausfüllfelder im Druck deutlich sichtbar */
+    .leitfaden-zeitplan .feld {
+        border-bottom: 1px solid #000;
+    }
+}

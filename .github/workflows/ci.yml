@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyse:
+    name: Syntax, PHPStan, Abhängigkeiten
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql, mbstring, curl
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Syntax
+        run: git ls-files '*.php' | xargs -n1 php -l > /dev/null
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+      - name: Bekannte Sicherheitslücken in Abhängigkeiten
+        run: composer audit --locked
+
+  tests:
+    name: Tests (PHP ${{ matrix.php }}, MariaDB ${{ matrix.mariadb }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+        mariadb: ['10.11', '11.8']
+    services:
+      mariadb:
+        image: mariadb:${{ matrix.mariadb }}
+        env:
+          MARIADB_RANDOM_ROOT_PASSWORD: '1'
+          MARIADB_DATABASE: mpu_ci_test
+          MARIADB_USER: mpu_ci
+          MARIADB_PASSWORD: nur-fuer-ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      MPU_TEST_DB_NAME: mpu_ci_test
+      MPU_TEST_DB_USER: mpu_ci
+      MPU_TEST_DB_PASS: nur-fuer-ci
+      MPU_TEST_DB_HOST: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_mysql, mbstring, curl
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: vendor/bin/phpunit --display-warnings --fail-on-warning --fail-on-skipped tests/
+
+  auslieferung:
+    name: Build und Zugriffsregeln am echten Apache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq apache2
+      - run: pip install 'fonttools[woff]==4.62.1'
+      - name: Build mit erfundenen Zugangsdaten
+        run: |
+          printf 'DB_USER=ci\nDB_PASS="a&b c/d"\nDB_NAME=ci\n' > .env
+          bash scripts/build.sh
+      - name: Die Sonderzeichen sind in der .htaccess angekommen
+        run: grep -qF 'SetEnv DB_PASS "a&b c/d"' dist/.htaccess
+      - name: Zugriffsregeln
+        run: bash scripts/pruefe_zugriff.sh dist

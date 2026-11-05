@@ -1,0 +1,46 @@
+parameters:
+    level: 5
+    paths:
+        - .
+    excludePaths:
+        - vendor/*
+        - dist/*
+        - assets/*
+        - _prompts/*
+        - config/users.php (?)
+    scanFiles:
+        - logic/request.php
+    bootstrapFiles:
+        - config/allowed_values.php
+        - logic/request.php
+        - logic/validator.php
+        - logic/db_connect.php
+        - logic/mpu_helper.php
+        - triage.php
+        - auth.php
+    ignoreErrors:
+        # Seiten binden Handler und Teilvorlagen per require ein. Die Variablen kommen aus der einbindenden Seite.
+        - identifier: variable.undefined
+          paths:
+              - handlers/*
+              - partials/*
+        # Die Seiten binden Handler per require ein. Was der Handler setzt, sieht die Analyse auf Seitenebene nicht.
+        # Geprüft bleiben dort Funktionen, Konstanten, Argumente und Syntax, in logic/, handlers/ und scripts/ alles.
+        - identifier: variable.undefined
+          path: bearbeiten.php
+        - identifier: variable.undefined
+          path: aufnahme.php
+        - message: '#always evaluate to (true|false)|condition is always (true|false)|Comparison operation .* is always|always exists and is always falsy#'
+          paths:
+              - aufnahme.php
+              - bearbeiten.php
+              - sitzungen.php
+        # Falsch positiv: Die Analyse engt den Wert nach dem if davor zu weit ein.
+        - message: '#is always true#'
+          path: akte_druck.php
+        # PHPUnit: Der Test setzt $_SERVER dazwischen, das sieht die Analyse nicht.
+        - identifier: method.alreadyNarrowedType
+          path: tests/*
+        # db.php setzt sie, die Seiten binden es relativ ein.
+        - message: '#Variable \$(pdo|csp_nonce|csrf_token) might not be defined#'
+          identifier: variable.undefined

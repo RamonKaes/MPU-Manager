@@ -1,0 +1,27 @@
+/* Cantarell Variable Font – Druckschrift der PDF-Dokumente (Vertrag,
+ * Datenschutz, Widerruf, Strategie). Lokal eingebunden, kein CDN.
+ *
+ * Cantarell 0.303, SIL Open Font License 1.1 (siehe LICENSE-Cantarell).
+ * Erzeugt aus Cantarell-VF.otf:
+ *   fonttools varLib.instancer Cantarell-VF.otf wght=400:700 -o vf.otf
+ *   pyftsubset vf.otf --flavor=woff2 --layout-features='*' \
+ *     --unicodes="U+0020-007E,U+00A0-00FF,U+0100-017F,U+0180-024F,\
+ *                 U+2000-206F,U+20A0-20CF,U+2122,U+2212" \
+ *     --output-file=Cantarell.woff2
+ *
+ * Der Gewichtsbereich 400–700 liefert einen echten Fettschnitt; vorher wurde
+ * nur der Regular-Schnitt geladen und Fett vom Browser synthetisiert.
+ * Der Zeichensatz umfasst alle Latin-Blöcke (deckt auch polnische, türkische,
+ * tschechische und baltische Namen ab), nicht aber Kyrillisch und Griechisch.
+ *
+ * font-display: block statt swap – die Dokumente gehen in den Druck, ein
+ * Layoutsprung mit Fallback-Schrift wäre im gerenderten PDF sichtbar.
+ */
+@font-face {
+    font-family: 'Cantarell';
+    src: url('Cantarell.woff2') format('woff2') tech('variations'),
+         url('Cantarell.woff2') format('woff2-variations');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: block;
+}

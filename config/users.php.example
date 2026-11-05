@@ -1,0 +1,22 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * VORLAGE für config/users.php  (die echte Datei ist gitignored).
+ *
+ * 1. Diese Datei nach config/users.php kopieren.
+ * 2. Für jeden Benutzer einen bcrypt-Hash erzeugen und den Platzhalter ersetzen:
+ *
+ *      php -r "echo password_hash('IhrPasswort', PASSWORD_BCRYPT, ['cost' => 12]) . PHP_EOL;"
+ *
+ * 3. Benutzername = Array-Schlüssel (Login-Feld), display_name = Anzeige in der UI.
+ *
+ * Der Platzhalter unten ist kein gültiger Hash: Solange er dort steht, ist keine
+ * Anmeldung möglich.
+ */
+return [
+    'Benutzername' => [
+        'hash'         => 'HIER-EIGENEN-BCRYPT-HASH-EINTRAGEN',
+        'display_name' => 'Voller Name',
+    ],
+];
